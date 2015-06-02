@@ -1,0 +1,25 @@
+# generated files
+bin/
+gen/
+target/
+build/
+tmp/
+.gradle/
+*.class
+*.apk
+*.ap_
+
+# IntellJ config files
+# We want to share run configurations, so don't exclude the whole dir
+/.idea
+/.navigation
+*.iml
+
+# Local configuration files
+local.properties
+.DS_Store
+
+# Android Studio added this automatically. Do we need?
+/captures
+
+
