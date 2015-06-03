@@ -8,6 +8,7 @@ import android.net.Uri;
 import android.provider.MediaStore;
 import android.util.Log;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -23,6 +24,19 @@ public class MediaStoreTester {
         dumpImageInfo(context, MediaStore.Images.Media.EXTERNAL_CONTENT_URI, "Grip ring.jpg", true);
     }
 
+    public void testFileAbsolutePath() {
+        String workDir = System.getProperty("user.dir");
+
+        Log.d(TAG, "Current working directory: " + workDir);
+        File f = new File("TestFile.txt");
+        Log.d(TAG, "Path of test file: " + f.getAbsolutePath());
+
+        System.setProperty("user.dir", "/mnt/sdcard");
+        Log.d(TAG, "New current working directory: " + System.getProperty("user.dir"));
+        Log.d(TAG, "New path of test file: " + f.getAbsolutePath());
+
+        System.setProperty("user.dir", workDir);
+    }
 
     private void dumpContent(Context context, Uri uri, boolean isVerbose) {
         Log.d(TAG, "---");
