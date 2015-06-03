@@ -3,10 +3,12 @@ package com.feketga.testapp;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.database.Cursor;
+import android.media.ExifInterface;
 import android.net.Uri;
 import android.provider.MediaStore;
 import android.util.Log;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -23,6 +25,7 @@ public class MediaStoreTester {
 
 
     private void dumpContent(Context context, Uri uri, boolean isVerbose) {
+        Log.d(TAG, "---");
         Log.d(TAG, "Content of " + uri.toString());
         ContentResolver cr = context.getContentResolver();
         Cursor cursor = cr.query(uri, null, null, null, null);
@@ -41,11 +44,19 @@ public class MediaStoreTester {
     }
 
     private void dumpImageInfo(Context context, Uri uri, String fileName, boolean isVerbose) {
+        Log.d(TAG, "---");
         Log.d(TAG, "Info of " + fileName);
         ContentResolver cr = context.getContentResolver();
 
         // SELECT _id, _display_name FROM authority WHERE _display_name LIKE ?
-        Cursor cursor = cr.query(uri, new String[]{"_id","_display_name"}, "_display_name LIKE ?", new String[]{fileName}, null);
+        Cursor cursor =
+                cr.query(
+                        uri,
+                        new String[]{MediaStore.Images.ImageColumns._ID,
+                                MediaStore.Images.ImageColumns.DISPLAY_NAME},
+                        MediaStore.Images.ImageColumns.DISPLAY_NAME + " LIKE ?",
+                        new String[]{fileName},
+                        null);
         Log.d(TAG, "Matching image count: " + cursor.getCount());
         if (cursor.getCount() > 0) {
             while (cursor.moveToNext()) {
@@ -55,6 +66,7 @@ public class MediaStoreTester {
     }
 
     private void dumpItemInfo(Cursor cursor, boolean isVerbose) {
+        Log.d(TAG, "--- ---");
         if (isVerbose) {
             dumpVerboseItemInfo(cursor);
         } else {
@@ -77,6 +89,7 @@ public class MediaStoreTester {
     }
 
     private void dumpVerboseItemInfo(Cursor cursor) {
+        String filePath = "";
         String[] columnNames = cursor.getColumnNames();
         for (int i = 0; i < columnNames.length; ++i) {
             Log.d(TAG, "Column name: " + columnNames[i]);
@@ -105,7 +118,81 @@ public class MediaStoreTester {
                     break;
             }
             Log.d(TAG, "       value: " + value);
+
+            if (columnNames[i].equals(MediaStore.Images.Media.DATA)) {
+                filePath = value;
+            }
+        }
+
+        dumpImageExifInfo(filePath);
+    }
+
+    private void dumpImageExifInfo(String imageFilePath) {
+        Log.d(TAG, "--- --- ---");
+        try {
+            ExifInterface exif = new ExifInterface(imageFilePath);
+            dumpImageExifTag(exif, ExifInterface.TAG_APERTURE, "");
+            dumpImageExifTag(exif, ExifInterface.TAG_DATETIME, "");
+            dumpImageExifTag(exif, ExifInterface.TAG_EXPOSURE_TIME, "");
+            dumpImageExifTag(exif, ExifInterface.TAG_FLASH, 0);
+            dumpImageExifTag(exif, ExifInterface.TAG_FOCAL_LENGTH, 0.0);
+            dumpImageExifTag(exif, ExifInterface.TAG_GPS_ALTITUDE, 0.0);
+            dumpImageExifTag(exif, ExifInterface.TAG_GPS_ALTITUDE_REF, 0);
+            dumpImageExifTag(exif, ExifInterface.TAG_GPS_DATESTAMP, "");
+            dumpImageExifTag(exif, ExifInterface.TAG_GPS_LATITUDE, "");
+            dumpImageExifTag(exif, ExifInterface.TAG_GPS_LATITUDE_REF, "");
+            dumpImageExifTag(exif, ExifInterface.TAG_GPS_LONGITUDE, "");
+            dumpImageExifTag(exif, ExifInterface.TAG_GPS_LONGITUDE_REF, "");
+            dumpImageExifTag(exif, ExifInterface.TAG_GPS_PROCESSING_METHOD, "");
+            dumpImageExifTag(exif, ExifInterface.TAG_GPS_TIMESTAMP, "");
+            dumpImageExifTag(exif, ExifInterface.TAG_IMAGE_LENGTH, 0);
+            dumpImageExifTag(exif, ExifInterface.TAG_IMAGE_WIDTH, 0);
+            dumpImageExifTag(exif, ExifInterface.TAG_ISO, "");
+            dumpImageExifTag(exif, ExifInterface.TAG_MAKE, "");
+            dumpImageExifTag(exif, ExifInterface.TAG_MODEL, "");
+            dumpImageExifTag(exif, ExifInterface.TAG_ORIENTATION, 0);
+            dumpImageExifTag(exif, ExifInterface.TAG_WHITE_BALANCE, 0);
+        } catch (IOException e) {
+            Log.d(TAG, "Cannot read EXIF from " + imageFilePath);
         }
     }
+
+    private void dumpImageExifTag(ExifInterface exif, String tag, String typeTag) {
+        String value = exif.getAttribute(tag);
+        if (value == null) {
+            value = "<n/a>";
+        }
+        Log.d(TAG, tag + ": " + value);
+    }
+
+    private void dumpImageExifTag(ExifInterface exif, String tag, int typeTag) {
+        String value = String.valueOf(exif.getAttributeInt(tag, -1));
+        if (value.equals("-1")) {
+            value = "<n/a>";
+        }
+        Log.d(TAG, tag + ": " + value);
+    }
+
+    private void dumpImageExifTag(ExifInterface exif, String tag, double typeTag) {
+        String value = String.valueOf(exif.getAttributeDouble(tag, -1.0));
+        if (value.equals("-1.0")) {
+            value = "<n/a>";
+        }
+        Log.d(TAG, tag + ": " + value);
+    }
+
+//    private <T> void dumpImageExifTag(ExifInterface exif, String tag, T typeTag) {
+//        Log.d(TAG, tag + ": " + getImageExifTag(exif, tag, typeTag));
+//    }
+//
+//    private String getImageExifTag(ExifInterface exif, String tag, String _typeTag) {
+//        return exif.getAttribute(tag);
+//    }
+//    private String getImageExifTag(ExifInterface exif, String tag, Integer _typeTag) {
+//        return String.valueOf(exif.getAttributeInt(tag, -1));
+//    }
+//    private String getImageExifTag(ExifInterface exif, String tag, Double _typeTag) {
+//        return String.valueOf(exif.getAttributeDouble(tag, -1.0));
+//    }
 
 }
