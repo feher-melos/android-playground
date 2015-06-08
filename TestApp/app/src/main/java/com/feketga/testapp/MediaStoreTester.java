@@ -28,14 +28,35 @@ public class MediaStoreTester {
         String workDir = System.getProperty("user.dir");
 
         Log.d(TAG, "Current working directory: " + workDir);
-        File f = new File("TestFile.txt");
-        Log.d(TAG, "Path of test file: " + f.getAbsolutePath());
+        File f1 = new File("TestFile.txt");
+        File f2 = new File("TestDir/TestFile.txt");
+        File f3 = new File("./TestDir/TestFile.txt");
+        File f4 = new File("/TestDir/TestFile.txt");
+        dumpFilePathStuff(f1, "f1");
+        dumpFilePathStuff(f2, "f2");
+        dumpFilePathStuff(f3, "f3");
+        dumpFilePathStuff(f4, "f4");
 
         System.setProperty("user.dir", "/mnt/sdcard");
         Log.d(TAG, "New current working directory: " + System.getProperty("user.dir"));
-        Log.d(TAG, "New path of test file: " + f.getAbsolutePath());
+        dumpFilePathStuff(f1, "f1");
+        dumpFilePathStuff(f2, "f2");
+        dumpFilePathStuff(f3, "f3");
+        dumpFilePathStuff(f4, "f4");
 
         System.setProperty("user.dir", workDir);
+    }
+
+    private void dumpFilePathStuff(File file, String variableName) {
+        try {
+            Log.d(TAG, variableName + ".getAbsolutePath(): " + file.getAbsolutePath());
+            Log.d(TAG, variableName + ".getCanonicalPath(): " + file.getCanonicalPath());
+            Log.d(TAG, variableName + ".getPath(): " + file.getPath());
+            Log.d(TAG, variableName + ".getName(): " + file.getName());
+            Log.d(TAG, variableName + ".isAbsolute(): " + file.isAbsolute());
+        } catch (IOException e) {
+            Log.d(TAG, "IOException happened: " + e.getMessage());
+        }
     }
 
     private void dumpContent(Context context, Uri uri, boolean isVerbose) {

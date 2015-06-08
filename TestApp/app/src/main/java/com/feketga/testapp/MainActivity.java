@@ -9,7 +9,6 @@ import android.provider.MediaStore;
 import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -34,7 +33,8 @@ public class MainActivity extends AppCompatActivity {
         button1.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                testDirs();
+                SecondaryStorageTester.testDirPaths(getApplicationContext());
+                SecondaryStorageTester.testDirPaths(MainActivity.this);
             }
         });
 
@@ -43,6 +43,22 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 new MediaStoreTester().testGalleryProvider(MainActivity.this);
+            }
+        });
+
+        Button button3 = (Button) findViewById(R.id.button3);
+        button3.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                new MediaStoreTester().testFileAbsolutePath();
+            }
+        });
+
+        Button button4 = (Button) findViewById(R.id.button4);
+        button4.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                SecondaryStorageTester.testRootOfSdCard(MainActivity.this);
             }
         });
 
@@ -70,33 +86,6 @@ public class MainActivity extends AppCompatActivity {
         }
 
         return super.onOptionsItemSelected(item);
-    }
-
-
-    private void testDirs() {
-        Context context = getApplicationContext();
-
-        dumpDir(context.getCacheDir(), "context.getCacheDir()");
-        dumpDir(context.getDir("privateTestFile", MODE_PRIVATE), "context.getDir(\"privateTestFile\", MODE_PRIVATE)");
-        dumpDir(context.getFilesDir(), "context.getFilesDir()");
-        dumpDir(context.getDatabasePath("testDbase"), "context.getDatabasePath(\"testDbase\")");
-        dumpDir(Environment.getExternalStorageDirectory(), "Environment.getExternalStorageDirectory()");
-        dumpDir(context.getExternalFilesDir(null), "context.getExternalFilesDir(null)");
-        dumpDir(context.getExternalFilesDir(Environment.DIRECTORY_PICTURES), "context.getExternalFilesDir(Environment.DIRECTORY_PICTURES)");
-        dumpDir(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES), "Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES)");
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
-            File[] externalFilesDirs = context.getExternalFilesDirs(null);
-            for (File file : externalFilesDirs) {
-                dumpDir(file, "context.getExternalFilesDirs(null)");
-            }
-        }
-    }
-
-    private void dumpDir(File file, String message) {
-        if (file != null) {
-            Log.d("ZIZI", message + ": " + file.getAbsolutePath());
-        }
     }
 
 }
