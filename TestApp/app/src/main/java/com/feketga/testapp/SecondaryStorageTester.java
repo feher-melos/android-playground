@@ -31,7 +31,39 @@ public class SecondaryStorageTester {
         }
     }
 
+    public static void testSdCardAppDir(Context context) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+            File[] externalFilesDirs = context.getExternalFilesDirs(null);
+            for (File file : externalFilesDirs) {
+                if (file.getAbsolutePath().startsWith("/storage/sdcard")) {
+                    createTestFile(new File(file.getAbsolutePath() + "/.uuid"));
+                }
+            }
+        }
+    }
+
+    private static void createTestFile(File f) {
+        try {
+            f.createNewFile();
+            FileWriter fstream = new FileWriter(f, true);
+            BufferedWriter bw = new BufferedWriter(fstream);
+            try {
+                bw.write("Hello world!\n");
+                Log.d(TAG, "Created test file: " + f.getAbsolutePath());
+            } finally {
+                bw.close();
+            }
+        } catch (IOException e) {
+            Log.d(TAG, "Cannot create: " + f.getAbsolutePath());
+        }
+    }
+
     public static void testDirPaths(Context context) {
+        String envSecondaryStorage = System.getenv("SECONDARY_STORAGE");
+        if (envSecondaryStorage != null) {
+            Log.d(TAG, "System.getenv(\"SECONDARY_STORAGE\"): " + envSecondaryStorage);
+        }
+
         dumpDir(context.getCacheDir(), "context.getCacheDir()");
         dumpDir(context.getDir("privateTestFile", Context.MODE_PRIVATE), "context.getDir(\"privateTestFile\", MODE_PRIVATE)");
         dumpDir(context.getFilesDir(), "context.getFilesDir()");
