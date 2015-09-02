@@ -58,32 +58,48 @@ public class SecondaryStorageTester {
         }
     }
 
-    public static void testDirPaths(Context context) {
+    public static String testDirPaths(Context context) {
+        StringBuilder b = new StringBuilder();
+
         String envSecondaryStorage = System.getenv("SECONDARY_STORAGE");
         if (envSecondaryStorage != null) {
-            Log.d(TAG, "System.getenv(\"SECONDARY_STORAGE\"): " + envSecondaryStorage);
+            myLog(b, "System.getenv(\"SECONDARY_STORAGE\"): " + envSecondaryStorage);
+        } else {
+            myLog(b, "System.getenv(\"SECONDARY_STORAGE\"): NOT AVAILABLE");
         }
+        dumpDir(b, Environment.getExternalStorageDirectory(), "Environment.getExternalStorageDirectory()");
+        dumpDir(b, Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES), "Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES)");
 
-        dumpDir(context.getCacheDir(), "context.getCacheDir()");
-        dumpDir(context.getDir("privateTestFile", Context.MODE_PRIVATE), "context.getDir(\"privateTestFile\", MODE_PRIVATE)");
-        dumpDir(context.getFilesDir(), "context.getFilesDir()");
-        dumpDir(context.getDatabasePath("testDbase"), "context.getDatabasePath(\"testDbase\")");
-        dumpDir(Environment.getExternalStorageDirectory(), "Environment.getExternalStorageDirectory()");
-        dumpDir(context.getExternalFilesDir(null), "context.getExternalFilesDir(null)");
-        dumpDir(context.getExternalFilesDir(Environment.DIRECTORY_PICTURES), "context.getExternalFilesDir(Environment.DIRECTORY_PICTURES)");
-        dumpDir(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES), "Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES)");
-
+        dumpDir(b, context.getDir("privateTestFile", Context.MODE_PRIVATE), "context.getDir(\"privateTestFile\", MODE_PRIVATE)");
+        dumpDir(b, context.getFilesDir(), "context.getFilesDir()");
+        dumpDir(b, context.getCacheDir(), "context.getCacheDir()");
+        dumpDir(b, context.getDatabasePath("testDbase"), "context.getDatabasePath(\"testDbase\")");
+        dumpDir(b, context.getExternalFilesDir(null), "context.getExternalFilesDir(null)");
+        dumpDir(b, context.getExternalFilesDir(Environment.DIRECTORY_PICTURES), "context.getExternalFilesDir(Environment.DIRECTORY_PICTURES)");
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
             File[] externalFilesDirs = context.getExternalFilesDirs(null);
             for (File file : externalFilesDirs) {
-                dumpDir(file, "context.getExternalFilesDirs(null)");
+                dumpDir(b, file, "context.getExternalFilesDirs(null)");
             }
+        } else {
+            myLog(b, "context.getExternalFilesDirs(null): NOT SUPPORTED");
+        }
+
+        return b.toString();
+    }
+
+    private static void dumpDir(StringBuilder b, File file, String message) {
+        if (file != null) {
+            myLog(b, message + ": " + file.getAbsolutePath());
+        } else {
+            myLog(b, message + ": NOT AVAILABLE");
         }
     }
 
-    private static void dumpDir(File file, String message) {
-        if (file != null) {
-            Log.d("ZIZI", message + ": " + file.getAbsolutePath());
+    private static void myLog(StringBuilder b, String message) {
+        Log.d(TAG, message);
+        if (b != null) {
+            b.append(message).append("\n\n");
         }
     }
 
