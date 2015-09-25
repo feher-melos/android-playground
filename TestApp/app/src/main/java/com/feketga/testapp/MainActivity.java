@@ -29,10 +29,10 @@ public class MainActivity extends AppCompatActivity {
         button1.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-//                String s1 = SecondaryStorageTester.testDirPaths(getApplicationContext());
-//                String s2 = SecondaryStorageTester.testDirPaths(MainActivity.this);
-//                t.setText(s1 + s2);
-                t.setText(DateAndTime.testCalendarMonth());
+                String s1 = SecondaryStorageTester.testDirPaths(getApplicationContext());
+                String s2 = SecondaryStorageTester.testDirPaths(MainActivity.this);
+                t.setText(s1 + s2);
+//                t.setText(DateAndTime.testCalendarMonth());
             }
         });
 
