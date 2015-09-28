@@ -1,6 +1,7 @@
 package net.feketga.cropstudy1;
 
 import android.content.Context;
+import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
@@ -12,7 +13,10 @@ import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 
+import com.davemorrissey.labs.subscaleview.ImageSource;
 import com.davemorrissey.labs.subscaleview.SubsamplingScaleImageView;
+
+import net.feketga.cropstudy1.ImageCropper;
 
 public class CropImageView extends SubsamplingScaleImageView implements View.OnTouchListener {
 
@@ -20,7 +24,8 @@ public class CropImageView extends SubsamplingScaleImageView implements View.OnT
 
     private int mOffset = 100; // pixels
     private int mMinimumCropArea = 200 * 200; // pixels
-    private int mCropBorderWidth = 4; // pixels
+    private int mCropBorderWidth = 2; // pixels
+    private int mCropCornerWidth = 6; // pixels
     private int mCropBorderTouchRadius = 50; // pixels
 
     private RectF mCropRectangle;
@@ -31,6 +36,10 @@ public class CropImageView extends SubsamplingScaleImageView implements View.OnT
 
     public CropImageView(Context context, AttributeSet attr) {
         super(context, attr);
+    }
+
+    public void setImageBitmap(Bitmap bitmap) {
+        setImage(ImageSource.bitmap(bitmap));
     }
 
     public RectF getCropRectangle() {
@@ -60,11 +69,12 @@ public class CropImageView extends SubsamplingScaleImageView implements View.OnT
             updateAfterAdjustments();
         }
 
+        // Cover the image oustide the crop area with a dark shade.
         Paint paint = new Paint();
         paint.setAntiAlias(true);
         paint.setStyle(Paint.Style.FILL);
         paint.setColor(Color.BLACK);
-        paint.setAlpha(200);
+        paint.setAlpha(mIsAdjustingCropArea ? 160 : 190);
 
         // Cover the top of the image view with a dark shade.
         RectF rectangle = new RectF(0, 0, getWidth(), mCropRectangle.top);
@@ -85,9 +95,52 @@ public class CropImageView extends SubsamplingScaleImageView implements View.OnT
         // Draw a bounding box around the crop area to make it stand out more.
         paint.setStyle(Paint.Style.STROKE);
         paint.setStrokeWidth(mCropBorderWidth);
-        paint.setColor(mIsAdjustingCropArea ? Color.WHITE : Color.GRAY);
+        paint.setColor(Color.GRAY);
         paint.setAlpha(255);
         canvas.drawRect(mCropRectangle, paint);
+
+        // Left/top corner of crop area.
+        paint.setStrokeWidth(mCropCornerWidth);
+        paint.setColor(mIsAdjustingCropArea ? Color.WHITE : Color.GRAY);
+
+        canvas.drawLine(
+                mCropRectangle.left, mCropRectangle.top,
+                mCropRectangle.left, mCropRectangle.top + mCropBorderTouchRadius,
+                paint);
+        canvas.drawLine(
+                mCropRectangle.left, mCropRectangle.top,
+                mCropRectangle.left + mCropBorderTouchRadius, mCropRectangle.top,
+                paint);
+
+        // Right/top corner of crop area.
+        canvas.drawLine(
+                mCropRectangle.right, mCropRectangle.top,
+                mCropRectangle.right, mCropRectangle.top + mCropBorderTouchRadius,
+                paint);
+        canvas.drawLine(
+                mCropRectangle.right, mCropRectangle.top,
+                mCropRectangle.right - mCropBorderTouchRadius, mCropRectangle.top,
+                paint);
+
+        // Left/bottom corner of crop area.
+        canvas.drawLine(
+                mCropRectangle.left, mCropRectangle.bottom,
+                mCropRectangle.left, mCropRectangle.bottom - mCropBorderTouchRadius,
+                paint);
+        canvas.drawLine(
+                mCropRectangle.left, mCropRectangle.bottom,
+                mCropRectangle.left + mCropBorderTouchRadius, mCropRectangle.bottom,
+                paint);
+
+        // Right/bottom corner of crop area.
+        canvas.drawLine(
+                mCropRectangle.right, mCropRectangle.bottom,
+                mCropRectangle.right, mCropRectangle.bottom - mCropBorderTouchRadius,
+                paint);
+        canvas.drawLine(
+                mCropRectangle.right, mCropRectangle.bottom,
+                mCropRectangle.right - mCropBorderTouchRadius, mCropRectangle.bottom,
+                paint);
     }
 
     @Override
@@ -136,18 +189,20 @@ public class CropImageView extends SubsamplingScaleImageView implements View.OnT
         boolean isEventConsumed = false;
         int pointerIndex = event.getActionIndex();
         Log.d(TAG, "ACTION DOWN: " + pointerIndex);
+
         if (mIsAdjustingCropArea) {
             mIsAdjustingCropArea = false;
             isEventConsumed = true;
         } else {
             mFingerPos.set(event.getX(), event.getY());
-            mAdjustedCropBorder = determineTouchedBorder(mFingerPos);
+            mAdjustedCropBorder = determineTouchedCorner(mFingerPos);
             if (mAdjustedCropBorder != BORDER_NONE) {
                 mIsAdjustingCropArea = true;
                 Log.d(TAG, "FINGER DOWN ON CROP BORDER: " + mAdjustedCropBorder);
                 isEventConsumed = true;
             }
         }
+
         return isEventConsumed;
     }
 
@@ -198,6 +253,52 @@ public class CropImageView extends SubsamplingScaleImageView implements View.OnT
                 mCropRectangle.bottom + mCropBorderTouchRadius);
         if (border.contains(touchPoint.x, touchPoint.y)) {
             touchedBorder |= BORDER_RIGHT;
+        }
+
+        return touchedBorder;
+    }
+
+    private int determineTouchedCorner(PointF touchPoint) {
+        int touchedBorder = BORDER_NONE;
+
+        // Left/top corner of crop rectangle.
+        RectF border = new RectF(
+                mCropRectangle.left - mCropBorderTouchRadius,
+                mCropRectangle.top - mCropBorderTouchRadius,
+                mCropRectangle.left + mCropBorderTouchRadius,
+                mCropRectangle.top + mCropBorderTouchRadius);
+        if (border.contains(touchPoint.x, touchPoint.y)) {
+            touchedBorder |= BORDER_LEFT | BORDER_TOP;
+        }
+
+        // Right/top corner of crop rectangle.
+        border.set(
+                mCropRectangle.right - mCropBorderTouchRadius,
+                mCropRectangle.top - mCropBorderTouchRadius,
+                mCropRectangle.right + mCropBorderTouchRadius,
+                mCropRectangle.top + mCropBorderTouchRadius);
+        if (border.contains(touchPoint.x, touchPoint.y)) {
+            touchedBorder |= BORDER_RIGHT | BORDER_TOP;
+        }
+
+        // Left/bottom corner of crop rectangle.
+        border.set(
+                mCropRectangle.left - mCropBorderTouchRadius,
+                mCropRectangle.bottom - mCropBorderTouchRadius,
+                mCropRectangle.left + mCropBorderTouchRadius,
+                mCropRectangle.bottom + mCropBorderTouchRadius);
+        if (border.contains(touchPoint.x, touchPoint.y)) {
+            touchedBorder |= BORDER_LEFT | BORDER_BOTTOM;
+        }
+
+        // Right/bottom corner of crop rectangle.
+        border.set(
+                mCropRectangle.right - mCropBorderTouchRadius,
+                mCropRectangle.bottom - mCropBorderTouchRadius,
+                mCropRectangle.right + mCropBorderTouchRadius,
+                mCropRectangle.bottom + mCropBorderTouchRadius);
+        if (border.contains(touchPoint.x, touchPoint.y)) {
+            touchedBorder |= BORDER_RIGHT | BORDER_BOTTOM;
         }
 
         return touchedBorder;
